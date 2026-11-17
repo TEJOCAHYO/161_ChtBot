@@ -13,3 +13,22 @@ app.get("/", (req, res) => {
     res.redirect("/index.html");
 });
 
+app.post("/api/chat", async (req, res) => {
+    console.log("Request masuk ke Express!");
+
+    try {
+        const messages = req.body.messages;
+
+        if (!Array.isArray(messages)) {
+            return res.status(400).json({
+                error: "Messages harus berupa array"
+            });
+        }
+
+        if (!process.env.OPENROUTER_API_KEY) {
+            return res.status(500).json({
+                error: "API key belum diatur di file .env"
+            });
+        }
+
+        
