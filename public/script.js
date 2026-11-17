@@ -65,4 +65,74 @@ chatForm.addEventListener("submit", async (event) => {
             throw new Error(errorData.error || "Terjadi kesalahan pada server");
         }
 
-       
+        // =========================
+        // Baca streaming response
+        // =========================
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) {
+                break;
+            }
+
+            // Decode data chunk
+            buffer += decoder.decode(value, { stream: true });
+
+            // Pisahkan berdasarkan baris baru (newline)
+            const lines = buffer.split("\n");
+
+            // Simpan bagian yang belum lengkap kembali ke buffer
+            buffer = lines.pop();
+
+            for (const line of lines) {
+                const trimmedLine = line.trim();
+
+                if (!trimmedLine || !trimmedLine.startsWith("data:")) {
+                    continue;
+                }
+
+                const data = trimmedLine.slice(5).trim();
+
+                if (data === "[DONE]") {
+                    continue;
+                }
+
+                try {
+                    const token = JSON.parse(data);
+
+                    // Gabungkan token ke teks balasan bot
+                    botResponse += token;
+
+                    // Perbarui tampilan teks di bubble chat secara real-time
+                    botContent.textContent = botResponse;
+
+                    // Auto-scroll ke bagian bawah chat box
+                    chatBox.scrollTop = chatBox.scrollHeight;
+
+                } catch (error) {
+                    console.error("Gagal memparsing token JSON:", error);
+                }
+            }
+        }
+
+        // 3. Simpan respons lengkap AI ke riwayat array
+        messages.push({
+            role: "assistant",
+            content: botResponse
+        });
+
+    } catch (error) {
+        console.error("Error pada fetch chatbot:", error);
+        botContent.textContent = "Maaf, terjadi kesalahan: " + error.message;
+    } finally {
+        // Aktifkan kembali input dan tombol kirim
+        userInput.disabled = false;
+        button.disabled = false;
+        button.textContent = "Kirim";
+        userInput.focus();
+    }
+});
