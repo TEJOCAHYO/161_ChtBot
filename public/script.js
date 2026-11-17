@@ -19,3 +19,30 @@ function addMessage(text, sender) {
     return content;
 }
 
+chatForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const message = userInput.value.trim();
+    if (!message) {
+        return;
+    }
+
+    // 1. Tampilkan pesan user ke layar
+    addMessage(message, "user");
+
+    // Simpan pesan user ke array
+    messages.push({
+        role: "user",
+        content: message
+    });
+
+    // Kosongkan input
+    userInput.value = "";
+
+    // Disable input sementara selama bot memproses
+    userInput.disabled = true;
+    const button = chatForm.querySelector("button");
+    button.disabled = true;
+    button.textContent = "Menunggu...";
+
+   
